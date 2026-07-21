@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Think Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1c1b18;
+    --card:#f2e9d9;
+    --ink:#2a2420;
+    --ink-soft:#5a4f43;
+    --accent:#3f6b5c;
+    --accent-light:#a9c9bf;
+    --chip:#2b2a26;
+    --chip-active:#3f6b5c;
+    --muted:#8c8477;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    font-family:'IBM Plex Sans',sans-serif;
+    color:var(--card);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:32px 20px 48px;
+  }
+  header{
+    text-align:center;
+    margin-bottom:20px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:15px;
+    letter-spacing:0.02em;
+    color:var(--muted);
+    margin:0;
+  }
+  .chips{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    max-width:420px;
+    width:100%;
+    padding-bottom:6px;
+    margin-bottom:28px;
+    scrollbar-width:none;
+  }
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto;
+    background:var(--chip);
+    color:var(--muted);
+    border:1px solid #3a3833;
+    border-radius:999px;
+    padding:8px 14px;
+    font-size:13px;
+    font-family:'IBM Plex Sans',sans-serif;
+    cursor:pointer;
+    transition:background 0.15s, color 0.15s, border-color 0.15s;
+    white-space:nowrap;
+  }
+  .chip.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+  .deck-wrap{
+    position:relative;
+    width:100%;
+    max-width:380px;
+    margin-bottom:26px;
+  }
+  .deck-shadow-card{
+    position:absolute;
+    inset:0;
+    background:var(--card);
+    border-radius:20px;
+    opacity:0.35;
+  }
+  .deck-shadow-card:nth-child(1){ transform: rotate(-4deg) translateY(6px); }
+  .deck-shadow-card:nth-child(2){ transform: rotate(3deg) translateY(4px); opacity:0.55; }
+  .card{
+    position:relative;
+    background:var(--card);
+    color:var(--ink);
+    border-radius:22px;
+    padding:44px 34px 38px;
+    min-height:300px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    box-shadow:0 24px 50px -14px rgba(0,0,0,0.5);
+    transition:opacity 0.18s ease, transform 0.18s ease;
+  }
+  .card.fade{ opacity:0; transform:translateY(6px); }
+  .card-label{
+    font-size:12px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 0 16px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .star{ color:var(--accent); }
+  .card-title{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:30px;
+    line-height:1.15;
+    margin:0 0 16px;
+    letter-spacing:-0.01em;
+  }
+  .card-body{
+    font-size:16px;
+    line-height:1.65;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  button.draw{
+    width:100%;
+    max-width:380px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:14px;
+    padding:16px;
+    font-size:16px;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-weight:500;
+    cursor:pointer;
+    transition:background 0.15s, transform 0.1s;
+  }
+  button.draw:active{ transform:scale(0.98); }
+  button.draw:hover{ background:#365e51; }
+  .count{
+    margin-top:14px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .modes{
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+  }
+  .mode-btn{
+    background:var(--chip);
+    color:var(--muted);
+    border:1px solid #3a3833;
+    border-radius:999px;
+    padding:9px 18px;
+    font-size:13px;
+    font-family:'IBM Plex Sans',sans-serif;
+    cursor:pointer;
+  }
+  .mode-btn.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+  .search-row{
+    display:flex;
+    gap:8px;
+    width:100%;
+    max-width:380px;
+    margin-bottom:20px;
+  }
+  .search-row input{
+    flex:1;
+    border-radius:12px;
+    border:1px solid #3a3833;
+    background:var(--chip);
+    color:var(--card);
+    padding:12px 14px;
+    font-size:14px;
+    font-family:'IBM Plex Sans',sans-serif;
+  }
+  .search-row input::placeholder{ color:var(--muted); }
+  .search-row button{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    padding:0 18px;
+    font-size:14px;
+    font-family:'IBM Plex Sans',sans-serif;
+    cursor:pointer;
+  }
+  .results{
+    width:100%;
+    max-width:420px;
+    display:none;
+  }
+  .result-group{ margin-bottom:18px; }
+  .result-label{
+    font-size:12px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 8px;
+  }
+  .result-cards{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .result-card{
+    background:var(--card);
+    color:var(--ink);
+    border-radius:14px;
+    padding:12px 14px;
+  }
+  .result-card .rt{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:14px;
+    margin:0 0 4px;
+  }
+  .result-card .rb{
+    font-size:12.5px;
+    line-height:1.45;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  .status{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:12px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .card{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Think Cards</h1>
+</header>
+
+<div class="modes">
+  <button class="mode-btn active" id="modeDeck">Draw a card</button>
+  <button class="mode-btn" id="modeSearch">Type my problem</button>
+</div>
+
+<div id="deckView">
+<div class="chips" id="chips"></div>
+
+<div class="deck-wrap">
+  <div class="deck-shadow-card"></div>
+  <div class="deck-shadow-card"></div>
+  <div class="card" id="card">
+    <p class="card-label" id="cardLabel">Any stage</p>
+    <p class="card-title" id="cardTitle">Ready when you are</p>
+    <p class="card-body" id="cardBody">Pick a stage above, or leave it on "any stage" and draw at random.</p>
+  </div>
+</div>
+
+<button class="draw" id="drawBtn">Draw a card</button>
+</div>
+
+<div id="searchView" style="display:none; width:100%; max-width:420px; display:none; flex-direction:column; align-items:center;">
+  <div class="search-row">
+    <input id="q" placeholder="e.g. how to design search for AI">
+    <button id="go">Go</button>
+  </div>
+  <p class="status" id="status"></p>
+  <p style="font-size:12px;color:var(--muted);cursor:pointer;text-decoration:underline;margin:-8px 0 12px" id="resetKey">Reset saved API key</p>
+  <div class="results" id="results"></div>
+</div>
+
+<script>
+const deck = {
+  "Empathy & inclusion": [
+    ["Design for the edges","Ask if this works for someone with a permanent, temporary, or situational limitation \u2014 one hand, low vision, an unfamiliar language, a bad connection. Designs built for the edges usually work better for everyone in the middle too.",false],
+    ["Whose default is this?","Notice the assumptions baked into your \u201cdefault\u201d user \u2014 able-bodied, fluent in the interface's language, young, comfortable with technology. Name who gets quietly excluded by defaults nobody examined.",false],
+    ["Borrow the constraint","Try the flow with one hand, with the sound off, or translated into a language you don't speak. The friction you feel for five minutes is friction someone else feels every single day.",false],
+    ["Name who can't use this at all","Not \u201cwho finds this harder\u201d \u2014 who is completely locked out. A missing caption, an untranslated string, a color-only cue: look for the hard stop, not just the rough edge.",false]
+  ],
+  "Understand the person": [
+    ["Shadow a real user","Spend 20 minutes watching someone actually attempt the task, without helping or asking questions. Note where they hesitate, backtrack, or improvise.",false],
+    ["Borrow their words","Collect the exact phrases people use to describe the problem, in their own language. Use their vocabulary in your first draft of any copy or flow.",false],
+    ["Before, now, next","Where was the person coming from before this moment? What are they actually trying to do right now? Where do they go the instant they leave this screen? Design that only sees \u201cnow\u201d misses the connections on either side.",true],
+    ["Find the workaround","Look for the spreadsheet, sticky note, or hack someone built because your product didn't do it for them. That hack is a free spec.",false],
+    ["User goal","Ask what the person is actually trying to accomplish \u2014 not the action they're performing, but the outcome they want from it. Separate the click from the reason behind the click.",false],
+    ["Emotion","Name what the person is likely feeling right before, during, and after this moment \u2014 rushed, anxious, proud, bored. Design the tone and pace for that feeling, not for a neutral user who doesn't exist.",false],
+    ["Jobs to be done","Write what the person is \u201chiring\u201d this for, in one sentence: \u201cWhen [situation], I want to [motivation], so I can [outcome].\u201d You're not competing with similar features \u2014 you're competing with anything else that could do the same job.",false]
+  ],
+  "Reframe the problem": [
+    ["Ask \u201cwhy\u201d three times","Take the stated problem and ask why it matters, then why that matters, then why that matters. Design for the third answer, not the first.",true],
+    ["Swap the verb","Restate the problem replacing its main verb. See which verb reveals a different, truer problem.",false],
+    ["Name the real competitor","Ask what a person would do if your product didn't exist. Often it's a habit, not a rival product.",false],
+    ["Shrink the scope","State the problem for exactly one named person in one specific situation \u2014 not a persona category.",false]
+  ],
+  "Widen the options": [
+    ["Design the boring version first","Get the obvious, expected solution out of the way early so you can actually see past it.",false],
+    ["Design the no-screen version","Solve it with no interface at all. What that reveals often exposes what's actually needed underneath the UI.",false],
+    ["Steal the mechanic","Look at how an unrelated product solves a structurally similar problem, and adapt the mechanic, not the surface.",false],
+    ["Make it worse on purpose","Design the worst possible version, then invert every choice. The inversions are often stronger.",false]
+  ],
+  "Borrow from elsewhere": [
+    ["Find the pre-digital version","How did people solve this before software existed? Old constraints often reveal the real underlying need.",false],
+    ["Ask a five-year-old","Explain the problem in words a child would understand. If you can't, you haven't found the real problem yet.",false],
+    ["A different industry's failure","Find a product outside your field that tried this and failed. What did they get wrong?",false],
+    ["Borrow a metaphor","Describe the interaction using gardening, cooking, or driving. Where the metaphor breaks reveals a gap.",false]
+  ],
+  "Pressure-test it": [
+    ["Defend the opposite","Argue convincingly for the exact opposite of your decision. An easy argument means you need more evidence.",false],
+    ["Find the silent persona","Check which of your personas this doesn't serve at all \u2014 decide out loud if that's intentional.",false],
+    ["Predict the complaint","Write the one-star review this gets in six months. Can you live with it?",false],
+    ["Test the tired version","Try the flow distracted, tired, on a bad connection \u2014 not at your best.",false]
+  ],
+  "Decide and commit": [
+    ["Pick one, name the tradeoff","Choose a direction. Write, in one sentence, what you're deliberately giving up.",false],
+    ["Set the reversal cost","How expensive is it to undo later? Cheap-to-reverse decisions deserve less debate.",false],
+    ["Timebox the maybe","Give it a hard deadline. No new evidence by then, the default wins automatically.",false],
+    ["Say it in one sentence","Write it so a stakeholder could repeat it back correctly after hearing it once.",false]
+  ]
+};
+
+let activeStage = null;
+
+const chipsEl = document.getElementById('chips');
+const allChip = makeChip('Any stage', null);
+chipsEl.appendChild(allChip);
+Object.keys(deck).forEach(name => chipsEl.appendChild(makeChip(name, name)));
+
+function makeChip(label, stage){
+  const c = document.createElement('div');
+  c.className = 'chip' + (stage === activeStage ? ' active' : '');
+  c.textContent = label;
+  c.onclick = () => {
+    activeStage = stage;
+    [...chipsEl.children].forEach(ch => ch.classList.remove('active'));
+    c.classList.add('active');
+    draw();
+  };
+  if(stage === null) c.classList.add('active');
+  return c;
+}
+
+function draw(){
+  const pool = activeStage ? deck[activeStage] : Object.values(deck).flat();
+  const card = pool[Math.floor(Math.random() * pool.length)];
+  const cardEl = document.getElementById('card');
+  cardEl.classList.add('fade');
+  setTimeout(() => {
+    document.getElementById('cardLabel').innerHTML = (activeStage || 'Any stage') + (card[2] ? ' <span class="star">\u2605 must-have</span>' : '');
+    document.getElementById('cardTitle').textContent = card[0];
+    document.getElementById('cardBody').textContent = card[1];
+    cardEl.classList.remove('fade');
+  }, 140);
+}
+
+document.getElementById('drawBtn').onclick = draw;
+
+// --- Mode toggle ---
+const deckView = document.getElementById('deckView');
+const searchView = document.getElementById('searchView');
+const modeDeck = document.getElementById('modeDeck');
+const modeSearch = document.getElementById('modeSearch');
+
+modeDeck.onclick = () => {
+  deckView.style.display = 'flex';
+  deckView.style.flexDirection = 'column';
+  deckView.style.alignItems = 'center';
+  searchView.style.display = 'none';
+  modeDeck.classList.add('active');
+  modeSearch.classList.remove('active');
+};
+modeSearch.onclick = () => {
+  deckView.style.display = 'none';
+  searchView.style.display = 'flex';
+  modeSearch.classList.add('active');
+  modeDeck.classList.remove('active');
+};
+
+// --- AI search ---
+function getApiKey(){
+  let key = localStorage.getItem('thinkCardsApiKey');
+  if(!key){
+    key = prompt('Paste your Anthropic API key.\nIt is saved only in this browser, on this device, and sent only to api.anthropic.com.');
+    if(key) localStorage.setItem('thinkCardsApiKey', key.trim());
+  }
+  return key;
+}
+
+async function runSearch(){
+  const query = document.getElementById('q').value.trim();
+  const statusEl = document.getElementById('status');
+  const resultsEl = document.getElementById('results');
+  if(!query){ statusEl.textContent = 'Type a design problem first.'; return; }
+
+  const key = getApiKey();
+  if(!key){ statusEl.textContent = 'Needs an API key to run.'; return; }
+
+  statusEl.textContent = 'Thinking...';
+  resultsEl.style.display = 'none';
+
+  const systemPrompt = `You are a thinking partner for a UX designer. Given a design problem, return ONLY valid JSON, no preamble, no markdown fences, in this exact shape:
+{"consider":[{"title":"...","body":"..."},{"title":"...","body":"..."}],
+"principle":[{"title":"...","body":"..."},{"title":"...","body":"..."}],
+"impact":[{"title":"...","body":"..."},{"title":"...","body":"..."}],
+"user":[{"title":"...","body":"..."},{"title":"...","body":"..."}]}
+Each "body" is one or two short sentences, concrete and specific to the stated problem, never generic filler. "consider" = open questions worth asking. "principle" = a design principle to apply. "impact" = a possible business or product impact. "user" = something true about the person using it (goal, emotion, or context).`;
+
+  try{
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: query }]
+      })
+    });
+    if(!response.ok){
+      const errText = await response.text();
+      throw new Error('API error ' + response.status + ': ' + errText.slice(0,200));
+    }
+    const data = await response.json();
+    const text = data.content.map(b => b.text || '').join('').trim();
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    const groupLabels = { consider:'Consider', principle:'Design principle', impact:'Possible product impact', user:'About the user' };
+    resultsEl.innerHTML = '';
+    Object.keys(groupLabels).forEach(key2 => {
+      const group = parsed[key2] || [];
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'result-group';
+      const label = document.createElement('p');
+      label.className = 'result-label';
+      label.textContent = groupLabels[key2];
+      groupDiv.appendChild(label);
+      const cardsDiv = document.createElement('div');
+      cardsDiv.className = 'result-cards';
+      group.forEach(item => {
+        const c = document.createElement('div');
+        c.className = 'result-card';
+        c.innerHTML = '<p class="rt"></p><p class="rb"></p>';
+        c.querySelector('.rt').textContent = item.title || '';
+        c.querySelector('.rb').textContent = item.body || '';
+        cardsDiv.appendChild(c);
+      });
+      groupDiv.appendChild(cardsDiv);
+      resultsEl.appendChild(groupDiv);
+    });
+    statusEl.textContent = '';
+    resultsEl.style.display = 'block';
+  }catch(err){
+    statusEl.textContent = 'Something went wrong: ' + err.message;
+  }
+}
+
+document.getElementById('go').onclick = runSearch;
+document.getElementById('q').addEventListener('keydown', e => { if(e.key === 'Enter') runSearch(); });
+document.getElementById('resetKey').onclick = () => {
+  localStorage.removeItem('thinkCardsApiKey');
+  document.getElementById('status').textContent = 'Saved key cleared. Click Go to enter a new one.';
+};
+</script>
+
+</body>
+</html>
