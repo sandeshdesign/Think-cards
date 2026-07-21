@@ -248,33 +248,44 @@
 
 <div class="modes">
   <button class="mode-btn active" id="modeDeck">Draw a card</button>
-  <button class="mode-btn" id="modeSearch">Type my problem</button>
+  <button class="mode-btn" id="modeSearch">Type a problem</button>
 </div>
 
 <div id="deckView">
-<div class="chips" id="chips"></div>
-
 <div class="deck-wrap">
   <div class="deck-shadow-card"></div>
   <div class="deck-shadow-card"></div>
   <div class="card" id="card">
-    <p class="card-label" id="cardLabel">Any stage</p>
+    <p class="card-label" id="cardLabel"></p>
     <p class="card-title" id="cardTitle">Ready when you are</p>
-    <p class="card-body" id="cardBody">Pick a stage above, or leave it on "any stage" and draw at random.</p>
+    <p class="card-body" id="cardBody">Draw a card at random — no picking a category first.</p>
   </div>
 </div>
 
 <button class="draw" id="drawBtn">Draw a card</button>
 </div>
 
-<div id="searchView" style="display:none; width:100%; max-width:420px; display:none; flex-direction:column; align-items:center;">
+<div id="searchView" style="display:none; width:100%; max-width:380px; display:none; flex-direction:column; align-items:center;">
   <div class="search-row">
-    <input id="q" placeholder="e.g. how to design search for AI">
-    <button id="go">Go</button>
+    <input id="q" placeholder="e.g. reduce cart abandonment">
+    <button id="fillBtn">Go</button>
   </div>
+  <p style="font-size:12px;color:var(--muted);margin:-12px 0 16px;text-align:center">Tip: describing it as an action — "fix stockouts," "speed up checkout" — tends to read smoother than a topic phrase.</p>
   <p class="status" id="status"></p>
-  <p style="font-size:12px;color:var(--muted);cursor:pointer;text-decoration:underline;margin:-8px 0 12px" id="resetKey">Reset saved API key</p>
-  <div class="results" id="results"></div>
+
+  <div class="deck-wrap" id="searchDeckWrap" style="display:none">
+    <div class="deck-shadow-card"></div>
+    <div class="deck-shadow-card"></div>
+    <div class="card" id="searchCard">
+      <p class="card-label" id="searchCardLabel"></p>
+      <p class="card-title" id="searchCardTitle"></p>
+      <p class="card-body" id="searchCardBody"></p>
+    </div>
+  </div>
+  <button class="draw" id="shuffleBtn" style="display:none">Next card</button>
+
+  <p style="font-size:13px;color:var(--accent-light);cursor:pointer;margin:20px 0 4px;text-align:center" id="aiGoLink">Get a deeper AI-generated answer &rarr;</p>
+  <p style="font-size:12px;color:var(--muted);cursor:pointer;text-decoration:underline;margin:4px 0 12px" id="resetKey">Reset saved API key</p>
 </div>
 
 <script>
@@ -326,34 +337,14 @@ const deck = {
   ]
 };
 
-let activeStage = null;
-
-const chipsEl = document.getElementById('chips');
-const allChip = makeChip('Any stage', null);
-chipsEl.appendChild(allChip);
-Object.keys(deck).forEach(name => chipsEl.appendChild(makeChip(name, name)));
-
-function makeChip(label, stage){
-  const c = document.createElement('div');
-  c.className = 'chip' + (stage === activeStage ? ' active' : '');
-  c.textContent = label;
-  c.onclick = () => {
-    activeStage = stage;
-    [...chipsEl.children].forEach(ch => ch.classList.remove('active'));
-    c.classList.add('active');
-    draw();
-  };
-  if(stage === null) c.classList.add('active');
-  return c;
-}
-
 function draw(){
-  const pool = activeStage ? deck[activeStage] : Object.values(deck).flat();
+  const pool = Object.values(deck).flat();
   const card = pool[Math.floor(Math.random() * pool.length)];
   const cardEl = document.getElementById('card');
   cardEl.classList.add('fade');
+  document.getElementById('drawBtn').textContent = 'Draw another';
   setTimeout(() => {
-    document.getElementById('cardLabel').innerHTML = (activeStage || 'Any stage') + (card[2] ? ' <span class="star">\u2605 must-have</span>' : '');
+    document.getElementById('cardLabel').innerHTML = card[2] ? '<span class="star">\u2605 must-have</span>' : '';
     document.getElementById('cardTitle').textContent = card[0];
     document.getElementById('cardBody').textContent = card[1];
     cardEl.classList.remove('fade');
@@ -396,14 +387,14 @@ function getApiKey(){
 async function runSearch(){
   const query = document.getElementById('q').value.trim();
   const statusEl = document.getElementById('status');
-  const resultsEl = document.getElementById('results');
   if(!query){ statusEl.textContent = 'Type a design problem first.'; return; }
 
   const key = getApiKey();
   if(!key){ statusEl.textContent = 'Needs an API key to run.'; return; }
 
   statusEl.textContent = 'Thinking...';
-  resultsEl.style.display = 'none';
+  document.getElementById('searchDeckWrap').style.display = 'none';
+  document.getElementById('shuffleBtn').style.display = 'none';
 
   const systemPrompt = `You are a thinking partner for a UX designer. Given a design problem, return ONLY valid JSON, no preamble, no markdown fences, in this exact shape:
 {"consider":[{"title":"...","body":"..."},{"title":"...","body":"..."}],
@@ -438,40 +429,80 @@ Each "body" is one or two short sentences, concrete and specific to the stated p
     const parsed = JSON.parse(clean);
 
     const groupLabels = { consider:'Consider', principle:'Design principle', impact:'Possible product impact', user:'About the user' };
-    resultsEl.innerHTML = '';
+    const cards = [];
     Object.keys(groupLabels).forEach(key2 => {
-      const group = parsed[key2] || [];
-      const groupDiv = document.createElement('div');
-      groupDiv.className = 'result-group';
-      const label = document.createElement('p');
-      label.className = 'result-label';
-      label.textContent = groupLabels[key2];
-      groupDiv.appendChild(label);
-      const cardsDiv = document.createElement('div');
-      cardsDiv.className = 'result-cards';
-      group.forEach(item => {
-        const c = document.createElement('div');
-        c.className = 'result-card';
-        c.innerHTML = '<p class="rt"></p><p class="rb"></p>';
-        c.querySelector('.rt').textContent = item.title || '';
-        c.querySelector('.rb').textContent = item.body || '';
-        cardsDiv.appendChild(c);
+      (parsed[key2] || []).forEach(item => {
+        cards.push({ label: groupLabels[key2], title: item.title || '', body: item.body || '' });
       });
-      groupDiv.appendChild(cardsDiv);
-      resultsEl.appendChild(groupDiv);
     });
     statusEl.textContent = '';
-    resultsEl.style.display = 'block';
+    showResultCards(cards);
   }catch(err){
     statusEl.textContent = 'Something went wrong: ' + err.message;
   }
 }
 
-document.getElementById('go').onclick = runSearch;
-document.getElementById('q').addEventListener('keydown', e => { if(e.key === 'Enter') runSearch(); });
+// --- Fill in the blank (free, no API) ---
+const templates = [
+  ["Ask why three times", t => `Take "${t}" and ask why it matters. Then why that matters. Then why that matters again. Design for the third answer, not the first.`],
+  ["Design the no-screen version", t => `How would you solve "${t}" with no interface at all \u2014 a phone call, a physical object, a rule?`],
+  ["Find the silent persona", t => `For "${t}", which of your personas does this not serve at all? Decide out loud if that's intentional.`],
+  ["Before, now, next", t => `For "${t}": where was the person coming from before, what are they trying to do right now, and where do they go next?`],
+  ["Name the real competitor", t => `For "${t}", what would the person do if this didn't exist? Often it's a habit, not a rival product.`],
+  ["Predict the complaint", t => `Write the one-star review "${t}" gets in six months. Can you live with it?`],
+  ["Design the boring version first", t => `What's the most obvious, unoriginal solution to "${t}"? Get it out of the way first.`],
+  ["User goal", t => `For "${t}", what is the person actually trying to accomplish \u2014 not the action, but the outcome?`],
+  ["Whose default is this?", t => `For "${t}", whose default assumptions are baked in \u2014 and who gets quietly excluded?`],
+  ["Make it worse on purpose", t => `Design the worst possible version of "${t}", then invert every choice.`]
+];
+
+function fillInBlank(){
+  const query = document.getElementById('q').value.trim();
+  const statusEl = document.getElementById('status');
+  if(!query){ statusEl.textContent = 'Type a design problem first.'; document.getElementById('searchDeckWrap').style.display='none'; document.getElementById('shuffleBtn').style.display='none'; return; }
+
+  const shuffled = [...templates].sort(() => Math.random() - 0.5).slice(0, 4);
+  const cards = shuffled.map(([title, fn]) => ({ label: '', title, body: fn(query) }));
+  statusEl.textContent = '';
+  showResultCards(cards);
+}
+
+// --- Shared single-card cycling display for search results ---
+let resultCards = [];
+let resultIndex = 0;
+
+function showResultCards(cards){
+  resultCards = cards;
+  resultIndex = 0;
+  document.getElementById('searchDeckWrap').style.display = 'block';
+  document.getElementById('shuffleBtn').style.display = 'block';
+  document.getElementById('shuffleBtn').textContent = 'Next card';
+  renderResultCard();
+}
+
+function renderResultCard(){
+  const card = resultCards[resultIndex];
+  const cardEl = document.getElementById('searchCard');
+  cardEl.classList.add('fade');
+  setTimeout(() => {
+    document.getElementById('searchCardLabel').textContent = card.label || '';
+    document.getElementById('searchCardTitle').textContent = card.title;
+    document.getElementById('searchCardBody').textContent = card.body;
+    cardEl.classList.remove('fade');
+  }, 140);
+}
+
+document.getElementById('shuffleBtn').onclick = () => {
+  resultIndex = (resultIndex + 1) % resultCards.length;
+  renderResultCard();
+};
+
+document.getElementById('fillBtn').onclick = fillInBlank;
+document.getElementById('q').addEventListener('keydown', e => { if(e.key === 'Enter') fillInBlank(); });
+document.getElementById('aiGoLink').onclick = runSearch;
 document.getElementById('resetKey').onclick = () => {
   localStorage.removeItem('thinkCardsApiKey');
-  document.getElementById('status').textContent = 'Saved key cleared. Click Go to enter a new one.';
+  document.getElementById('status').textContent = 'Saved key cleared. Click the AI link to enter a new one.';
 };
 </script>
 
