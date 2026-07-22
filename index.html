@@ -468,6 +468,24 @@ modeSearch.onclick = () => {
   modeDeck.classList.remove('active');
 };
 
+// --- Swipe left/right to change card (mobile) ---
+function attachSwipe(el, onSwipe){
+  let startX = 0, startY = 0;
+  el.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    // Require a mostly-horizontal swipe past a small threshold,
+    // so vertical scrolling isn't accidentally treated as a swipe.
+    if(Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5){
+      onSwipe();
+    }
+  }, { passive: true });
+}
+
 // --- AI search ---
 function getApiKey(){
   let key = localStorage.getItem('thinkCardsGeminiKey');
@@ -580,10 +598,11 @@ function renderResultCard(){
   }, 140);
 }
 
-document.getElementById('shuffleBtn').onclick = () => {
+function nextResultCard(){
   resultIndex = (resultIndex + 1) % resultCards.length;
   renderResultCard();
-};
+}
+document.getElementById('shuffleBtn').onclick = nextResultCard;
 
 document.getElementById('fillBtn').onclick = fillInBlank;
 document.getElementById('q').addEventListener('keydown', e => { if(e.key === 'Enter') fillInBlank(); });
@@ -592,6 +611,11 @@ document.getElementById('resetKey').onclick = () => {
   localStorage.removeItem('thinkCardsGeminiKey');
   document.getElementById('status').textContent = 'Saved key cleared. Click the AI link to enter a new one.';
 };
+
+attachSwipe(document.getElementById('card'), draw);
+attachSwipe(document.getElementById('searchCard'), () => {
+  if(resultCards.length > 0) nextResultCard();
+});
 
 // --- Password lock ---
 // Change the text below to whatever password you want. This is a soft
