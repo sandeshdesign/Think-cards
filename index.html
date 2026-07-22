@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Think Cards</title>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-L5STRRY23H"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-L5STRRY23H');
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -309,6 +317,7 @@
 <div class="lock-overlay" id="lockOverlay">
   <div class="lock-box">
     <h2>Think Cards</h2>
+    <p style="font-size:13px;color:var(--ink-soft);margin:-10px 0 18px;line-height:1.5">Stuck on a design problem? Draw a card, not a blank.</p>
     <input type="password" id="lockInput" placeholder="Enter password">
     <button id="lockBtn">Unlock</button>
     <p class="lock-error" id="lockError"></p>
@@ -437,6 +446,7 @@ function draw(){
   const cardEl = document.getElementById('card');
   cardEl.classList.add('fade');
   document.getElementById('drawBtn').textContent = 'Draw another';
+  if(typeof gtag === 'function') gtag('event', 'card_drawn', { card_title: card[0] });
   setTimeout(() => {
     document.getElementById('cardLabel').innerHTML = card[2] ? '<span class="star">\u2605 must-have</span>' : '';
     document.getElementById('cardTitle').textContent = card[0];
@@ -460,12 +470,14 @@ modeDeck.onclick = () => {
   searchView.style.display = 'none';
   modeDeck.classList.add('active');
   modeSearch.classList.remove('active');
+  if(typeof gtag === 'function') gtag('event', 'mode_switch', { mode: 'draw' });
 };
 modeSearch.onclick = () => {
   deckView.style.display = 'none';
   searchView.style.display = 'flex';
   modeSearch.classList.add('active');
   modeDeck.classList.remove('active');
+  if(typeof gtag === 'function') gtag('event', 'mode_switch', { mode: 'type_a_problem' });
 };
 
 // --- Swipe left/right to change card (mobile) ---
@@ -542,9 +554,11 @@ Each "body" is one or two short sentences, concrete and specific to the stated p
       });
     });
     statusEl.textContent = '';
+    if(typeof gtag === 'function') gtag('event', 'ai_search_success');
     showResultCards(cards);
   }catch(err){
     statusEl.textContent = 'Something went wrong: ' + err.message;
+    if(typeof gtag === 'function') gtag('event', 'ai_search_error', { error_message: err.message.slice(0,100) });
   }
 }
 
@@ -570,6 +584,7 @@ function fillInBlank(){
   const shuffled = [...templates].sort(() => Math.random() - 0.5).slice(0, 4);
   const cards = shuffled.map(([title, fn]) => ({ label: '', title, body: fn(query) }));
   statusEl.textContent = '';
+  if(typeof gtag === 'function') gtag('event', 'fill_in_blank_used');
   showResultCards(cards);
 }
 
