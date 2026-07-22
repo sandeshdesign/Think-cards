@@ -386,17 +386,17 @@
 const deck = {
   "Empathy & inclusion": [
     ["Design for the edges","Ask if this works for someone with a permanent, temporary, or situational limitation \u2014 one hand, low vision, an unfamiliar language, a bad connection. Designs built for the edges usually work better for everyone in the middle too.",false],
-    ["Whose default is this?","Notice the assumptions baked into your \u201cdefault\u201d user \u2014 able-bodied, fluent in the interface's language, young, comfortable with technology. Name who gets quietly excluded by defaults nobody examined.",false],
+    ["Whose default is this?","Notice the assumptions baked into your \u201cdefault\u201d person \u2014 able-bodied, fluent in the interface's language, young, comfortable with technology. Name who gets quietly excluded by defaults nobody examined.",false],
     ["Borrow the constraint","Try the flow with one hand, with the sound off, or translated into a language you don't speak. The friction you feel for five minutes is friction someone else feels every single day.",false],
     ["Name who can't use this at all","Not \u201cwho finds this harder\u201d \u2014 who is completely locked out. A missing caption, an untranslated string, a color-only cue: look for the hard stop, not just the rough edge.",false]
   ],
   "Understand the person": [
-    ["Shadow a real user","Spend 20 minutes watching someone actually attempt the task, without helping or asking questions. Note where they hesitate, backtrack, or improvise.",false],
+    ["Shadow a real person","Spend 20 minutes watching someone actually attempt the task, without helping or asking questions. Note where they hesitate, backtrack, or improvise.",false],
     ["Borrow their words","Collect the exact phrases people use to describe the problem, in their own language. Use their vocabulary in your first draft of any copy or flow.",false],
     ["Before, now, next","Where was the person coming from before this moment? What are they actually trying to do right now? Where do they go the instant they leave this screen? Design that only sees \u201cnow\u201d misses the connections on either side.",true],
     ["Find the workaround","Look for the spreadsheet, sticky note, or hack someone built because your product didn't do it for them. That hack is a free spec.",false],
-    ["User goal","Ask what the person is actually trying to accomplish \u2014 not the action they're performing, but the outcome they want from it. Separate the click from the reason behind the click.",false],
-    ["Emotion","Name what the person is likely feeling right before, during, and after this moment \u2014 rushed, anxious, proud, bored. Design the tone and pace for that feeling, not for a neutral user who doesn't exist.",false],
+    ["Person goal","Ask what the person is actually trying to accomplish \u2014 not the action they're performing, but the outcome they want from it. Separate the click from the reason behind the click.",false],
+    ["Emotion","Name what the person is likely feeling right before, during, and after this moment \u2014 rushed, anxious, proud, bored. Design the tone and pace for that feeling, not for a neutral person who doesn't exist.",false],
     ["Jobs to be done","Write what the person is \u201chiring\u201d this for, in one sentence: \u201cWhen [situation], I want to [motivation], so I can [outcome].\u201d You're not competing with similar features \u2014 you're competing with anything else that could do the same job.",false]
   ],
   "Reframe the problem": [
@@ -516,7 +516,7 @@ Each "body" is one or two short sentences, concrete and specific to the stated p
     const clean = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
 
-    const groupLabels = { consider:'Consider', principle:'Design principle', impact:'Possible product impact', user:'About the user' };
+    const groupLabels = { consider:'Consider', principle:'Design principle', impact:'Possible product impact', user:'About the person' };
     const cards = [];
     Object.keys(groupLabels).forEach(key2 => {
       (parsed[key2] || []).forEach(item => {
@@ -539,7 +539,7 @@ const templates = [
   ["Name the real competitor", t => `For "${t}", what would the person do if this didn't exist? Often it's a habit, not a rival product.`],
   ["Predict the complaint", t => `Write the one-star review "${t}" gets in six months. Can you live with it?`],
   ["Design the boring version first", t => `What's the most obvious, unoriginal solution to "${t}"? Get it out of the way first.`],
-  ["User goal", t => `For "${t}", what is the person actually trying to accomplish \u2014 not the action, but the outcome?`],
+  ["Person goal", t => `For "${t}", what is the person actually trying to accomplish \u2014 not the action, but the outcome?`],
   ["Whose default is this?", t => `For "${t}", whose default assumptions are baked in \u2014 and who gets quietly excluded?`],
   ["Make it worse on purpose", t => `Design the worst possible version of "${t}", then invert every choice.`]
 ];
