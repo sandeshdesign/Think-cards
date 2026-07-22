@@ -310,6 +310,21 @@
     min-height:14px;
   }
   #app{ display:none; }
+  .like-btn{
+    position:absolute;
+    top:14px;
+    right:14px;
+    background:none;
+    border:none;
+    font-size:20px;
+    line-height:1;
+    cursor:pointer;
+    opacity:0.45;
+    padding:4px;
+    transition:opacity 0.15s, transform 0.15s;
+  }
+  .like-btn:hover{ opacity:0.8; }
+  .like-btn.liked{ opacity:1; transform:scale(1.2); }
 </style>
 </head>
 <body>
@@ -339,6 +354,7 @@
   <div class="deck-shadow-card"></div>
   <div class="deck-shadow-card"></div>
   <div class="card" id="card">
+    <button class="like-btn" id="likeBtn" title="Like this card" aria-label="Like this card">&#9825;</button>
     <p class="card-label" id="cardLabel"></p>
     <p class="card-title" id="cardTitle">Ready when you are</p>
     <p class="card-body" id="cardBody">Draw a card at random — no picking a category first.</p>
@@ -360,6 +376,7 @@
     <div class="deck-shadow-card"></div>
     <div class="deck-shadow-card"></div>
     <div class="card" id="searchCard">
+      <button class="like-btn" id="searchLikeBtn" title="Like this card" aria-label="Like this card">&#9825;</button>
       <p class="card-label" id="searchCardLabel"></p>
       <p class="card-title" id="searchCardTitle"></p>
       <p class="card-body" id="searchCardBody"></p>
@@ -377,16 +394,28 @@
 
 <div class="lock-overlay" id="aiInfoOverlay" style="display:none">
   <div class="lock-box" style="max-width:340px;text-align:left">
-    <h2 style="text-align:center">The deeper AI-generated answer</h2>
-    <p style="font-size:13px;line-height:1.6;margin:0 0 12px">Below the free results, there's a link that says "Get a deeper AI-generated answer." This one uses Google's Gemini AI to write fresh, specific insights about your exact problem — but it needs your own free API key the first time you use it:</p>
-    <ol style="font-size:13px;line-height:1.6;margin:0 0 12px;padding-left:18px">
-      <li>Go to aistudio.google.com/apikey</li>
-      <li>Sign in with any Google account</li>
-      <li>Click Create API key — if it asks you to choose a project, either create a new one or pick any existing one, it doesn't matter which</li>
-      <li>Copy the key that appears (starts with AIza...)</li>
-      <li>Back in Think Cards, click "Get a deeper AI-generated answer" — paste the key when it asks</li>
+    <h2 style="text-align:center">Get Deeper AI Insights</h2>
+    <p style="font-size:13px;line-height:1.6;margin:0 0 16px">Unlock tailored answers powered by Google Gemini. Setup takes less than a minute and is completely free.</p>
+
+    <p style="font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px">Step 1: Get your free API key</p>
+    <ol style="font-size:13px;line-height:1.6;margin:0 0 16px;padding-left:18px">
+      <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent)">aistudio.google.com/apikey</a> and sign in with any Google account.</li>
+      <li>Select <strong>Create API key</strong> (choose or create any project).</li>
+      <li>Copy the key (starts with <code>AIza...</code>).</li>
     </ol>
-    <p style="font-size:13px;line-height:1.6;margin:0 0 16px">This is completely free — Google's free tier covers normal personal use with no credit card required. The key is saved only in your own browser, on your own device — it's never sent to me or anyone else, only directly to Google.</p>
+
+    <p style="font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px">Step 2: Connect to Think Cards</p>
+    <ol style="font-size:13px;line-height:1.6;margin:0 0 16px;padding-left:18px">
+      <li>Return to Think Cards and select <strong>Get a deeper AI-generated answer</strong>.</li>
+      <li>Paste your key when prompted.</li>
+    </ol>
+
+    <p style="font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px">Privacy &amp; Cost</p>
+    <ul style="font-size:13px;line-height:1.6;margin:0 0 16px;padding-left:18px">
+      <li><strong>100% Free:</strong> Google's standard tier requires no credit card.</li>
+      <li><strong>Private:</strong> Your key stays stored in your browser. It connects directly to Google — nothing passes through me or anyone else.</li>
+    </ul>
+
     <button id="aiInfoClose">Got it</button>
   </div>
 </div>
@@ -447,6 +476,7 @@ function draw(){
   cardEl.classList.add('fade');
   document.getElementById('drawBtn').textContent = 'Draw another';
   if(typeof gtag === 'function') gtag('event', 'card_drawn', { card_title: card[0] });
+  resetLikeButton('likeBtn');
   setTimeout(() => {
     document.getElementById('cardLabel').innerHTML = card[2] ? '<span class="star">\u2605 must-have</span>' : '';
     document.getElementById('cardTitle').textContent = card[0];
@@ -605,6 +635,7 @@ function renderResultCard(){
   const card = resultCards[resultIndex];
   const cardEl = document.getElementById('searchCard');
   cardEl.classList.add('fade');
+  resetLikeButton('searchLikeBtn');
   setTimeout(() => {
     document.getElementById('searchCardLabel').innerHTML = (card.label || '') + (card.isAI ? ' <span class="ai-badge">AI</span>' : '');
     document.getElementById('searchCardTitle').textContent = card.title;
@@ -631,6 +662,53 @@ attachSwipe(document.getElementById('card'), draw);
 attachSwipe(document.getElementById('searchCard'), () => {
   if(resultCards.length > 0) nextResultCard();
 });
+
+// --- Discord "like" webhook ---
+// Paste your own Discord webhook URL below (Server Settings -> Integrations ->
+// Webhooks -> New Webhook -> Copy Webhook URL). This is visible in the page
+// source to anyone who looks, same as the password -- fine for a small
+// invited group, not a real secret.
+const DISCORD_WEBHOOK_URL = "PASTE_YOUR_DISCORD_WEBHOOK_URL_HERE";
+
+async function sendLike(title, isAI){
+  if(!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.includes('PASTE_YOUR')) return;
+  try{
+    await fetch(DISCORD_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: `\u2764\ufe0f Someone liked a card: "${title}"${isAI ? ' (AI-generated)' : ''}`
+      })
+    });
+  }catch(err){
+    // Fail silently -- a like that doesn't send shouldn't break the app.
+  }
+}
+
+document.getElementById('likeBtn').onclick = () => {
+  const btn = document.getElementById('likeBtn');
+  const title = document.getElementById('cardTitle').textContent;
+  btn.classList.add('liked');
+  btn.innerHTML = '&#9829;';
+  sendLike(title, false);
+  if(typeof gtag === 'function') gtag('event', 'card_liked', { card_title: title, source: 'deck' });
+};
+
+document.getElementById('searchLikeBtn').onclick = () => {
+  const btn = document.getElementById('searchLikeBtn');
+  const card = resultCards[resultIndex];
+  if(!card) return;
+  btn.classList.add('liked');
+  btn.innerHTML = '&#9829;';
+  sendLike(card.title, !!card.isAI);
+  if(typeof gtag === 'function') gtag('event', 'card_liked', { card_title: card.title, source: card.isAI ? 'ai' : 'fill_in_blank' });
+};
+
+function resetLikeButton(btnId){
+  const btn = document.getElementById(btnId);
+  btn.classList.remove('liked');
+  btn.innerHTML = '&#9825;';
+}
 
 // --- Password lock ---
 // Change the text below to whatever password you want. This is a soft
